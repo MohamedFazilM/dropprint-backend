@@ -1,4 +1,4 @@
-FROM eclipse-temurin:24-jdk
+FROM eclipse-temurin:21-jdk
 
 WORKDIR /app
 
@@ -9,4 +9,4 @@ RUN ./mvnw clean package -DskipTests
 
 EXPOSE 8081
 
-ENTRYPOINT ["java","-jar","target/project-0.0.1-SNAPSHOT.jar"]
+CMD ["java","-jar","target/project-0.0.1-SNAPSHOT.jar"]
