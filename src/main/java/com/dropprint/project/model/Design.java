@@ -1,0 +1,37 @@
+package com.dropprint.project.model;
+
+import jakarta.persistence.*;
+import java.time.LocalDateTime;
+
+@Entity
+@Table(name = "designs")
+public class Design {
+
+    @Id
+    private String id;
+
+    private String fileUrl;
+    private String printArea;
+    private Double positionX;
+    private Double positionY;
+    private Double scale;
+    private Double rotation;
+    private LocalDateTime createdAt = LocalDateTime.now();
+
+    public String getId() { return id; }
+    public void setId(String id) { this.id = id; }
+    public String getFileUrl() { return fileUrl; }
+    public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+    public String getPrintArea() { return printArea; }
+    public void setPrintArea(String printArea) { this.printArea = printArea; }
+    public Double getPositionX() { return positionX; }
+    public void setPositionX(Double positionX) { this.positionX = positionX; }
+    public Double getPositionY() { return positionY; }
+    public void setPositionY(Double positionY) { this.positionY = positionY; }
+    public Double getScale() { return scale; }
+    public void setScale(Double scale) { this.scale = scale; }
+    public Double getRotation() { return rotation; }
+    public void setRotation(Double rotation) { this.rotation = rotation; }
+    public LocalDateTime getCreatedAt() { return createdAt; }
+    public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
+}
