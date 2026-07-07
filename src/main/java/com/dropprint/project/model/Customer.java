@@ -1,5 +1,6 @@
 package com.dropprint.project.model;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
@@ -14,6 +15,10 @@ public class Customer {
     private String email;
     private String phone;
     private String address;
+
+    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
+    private String password;
+
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public String getId() { return id; }
@@ -26,6 +31,8 @@ public class Customer {
     public void setPhone(String phone) { this.phone = phone; }
     public String getAddress() { return address; }
     public void setAddress(String address) { this.address = address; }
+    public String getPassword() { return password; }
+    public void setPassword(String password) { this.password = password; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }
