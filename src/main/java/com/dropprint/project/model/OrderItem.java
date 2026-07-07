@@ -23,6 +23,10 @@ public class OrderItem {
     @JoinColumn(name = "design_id")
     private Design design;
 
+    @ManyToOne
+    @JoinColumn(name = "design_back_id")
+    private Design designBack;
+
     private String size;
     private int qty;
     private double price;
@@ -35,6 +39,8 @@ public class OrderItem {
     public void setProduct(Product product) { this.product = product; }
     public Design getDesign() { return design; }
     public void setDesign(Design design) { this.design = design; }
+    public Design getDesignBack() { return designBack; }
+    public void setDesignBack(Design designBack) { this.designBack = designBack; }
     public String getSize() { return size; }
     public void setSize(String size) { this.size = size; }
     public int getQty() { return qty; }

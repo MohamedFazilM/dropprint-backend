@@ -6,6 +6,7 @@ public class OrderItemRequestDTO {
     private int qty;
     private double price;
     private String designId;
+    private String designBackId;
 
     public String getProductId() { return productId; }
     public void setProductId(String productId) { this.productId = productId; }
@@ -17,4 +18,6 @@ public class OrderItemRequestDTO {
     public void setPrice(double price) { this.price = price; }
     public String getDesignId() { return designId; }
     public void setDesignId(String designId) { this.designId = designId; }
+    public String getDesignBackId() { return designBackId; }
+    public void setDesignBackId(String designBackId) { this.designBackId = designBackId; }
 }

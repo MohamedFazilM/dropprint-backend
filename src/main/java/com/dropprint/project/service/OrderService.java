@@ -73,6 +73,12 @@ public class OrderService {
                 item.setDesign(design);
             }
 
+            if (itemDto.getDesignBackId() != null) {
+                Design designBack = designRepository.findById(itemDto.getDesignBackId())
+                        .orElseThrow(() -> new RuntimeException("Back design not found: " + itemDto.getDesignBackId()));
+                item.setDesignBack(designBack);
+            }
+
             orderItems.add(item);
             total += itemDto.getPrice() * itemDto.getQty();
         }
