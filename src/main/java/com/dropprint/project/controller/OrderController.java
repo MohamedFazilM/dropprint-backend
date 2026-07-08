@@ -28,9 +28,14 @@ public class OrderController {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
 
-        String reqCustomerId = (String) request.getAttribute("req_customer_id");
-        if (reqCustomerId != null) {
-            if (order.getCustomer() == null || !order.getCustomer().getId().equals(reqCustomerId)) {
+        // Admin bypass
+        if (request.getAttribute("is_admin_bypass") != null) {
+            return order;
+        }
+
+        String reqCustomerEmail = (String) request.getAttribute("req_customer_email");
+        if (reqCustomerEmail != null) {
+            if (order.getCustomer() == null || !order.getCustomer().getEmail().equalsIgnoreCase(reqCustomerEmail)) {
                 throw new RuntimeException("Access denied. You do not own this order.");
             }
         }

@@ -1,17 +1,24 @@
 package com.dropprint.project.config;
 
+import com.dropprint.project.util.JwtUtil;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import java.util.Map;
+import java.util.Arrays;
 
 @Component
 public class SecurityInterceptor implements HandlerInterceptor {
 
-    @Value("${admin.token:admin123}")
-    private String adminToken;
+    @Autowired
+    private JwtUtil jwtUtil;
+
+    @Value("${admin.email:admin@dropprint.com,mohamedfazil.m10@gmail.com}")
+    private String adminEmails;
 
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
@@ -27,37 +34,50 @@ public class SecurityInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
 
-        // 1. Secure Admin APIs
-        if (path.startsWith("/api/admin")) {
-            String token = request.getHeader("X-Admin-Token");
-            if (token == null || token.trim().isEmpty()) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthenticated. Admin token is missing.");
+        // Secure Admin APIs and retrieve order ownership details
+        if (path.startsWith("/api/admin") || (path.startsWith("/api/orders/") && "GET".equalsIgnoreCase(request.getMethod()))) {
+            String authHeader = request.getHeader("Authorization");
+            if (authHeader == null || !authHeader.startsWith("Bearer ")) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthenticated. Authorization token is missing.");
                 return false;
             }
-            if (!adminToken.equals(token)) {
-                response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden. Invalid admin token.");
+
+            try {
+                // Decode and verify JWT
+                Map<String, Object> claims = jwtUtil.validateAndExtractClaims(authHeader);
+                String email = (String) claims.get("email");
+
+                // Get role from metadata
+                Map<String, Object> appMetadata = (Map<String, Object>) claims.get("app_metadata");
+                String role = appMetadata != null ? (String) appMetadata.get("role") : null;
+                if (role == null) {
+                    Map<String, Object> userMetadata = (Map<String, Object>) claims.get("user_metadata");
+                    role = userMetadata != null ? (String) userMetadata.get("role") : null;
+                }
+
+                // Check admin authorization
+                boolean isAdmin = "admin".equalsIgnoreCase(role) || 
+                        (email != null && Arrays.asList(adminEmails.split(",")).contains(email.toLowerCase().trim()));
+
+                if (path.startsWith("/api/admin")) {
+                    if (!isAdmin) {
+                        response.sendError(HttpServletResponse.SC_FORBIDDEN, "Forbidden. Administrator privileges required.");
+                        return false;
+                    }
+                }
+
+                if (path.startsWith("/api/orders/") && "GET".equalsIgnoreCase(request.getMethod())) {
+                    if (isAdmin) {
+                        request.setAttribute("is_admin_bypass", true);
+                    }
+                    // Inject verified email from JWT
+                    request.setAttribute("req_customer_email", email);
+                }
+
+            } catch (Exception e) {
+                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized. Token verification failed: " + e.getMessage());
                 return false;
             }
-        }
-
-        // 2. Setup IDOR checks on Retrieve Order details
-        if (path.startsWith("/api/orders/") && "GET".equalsIgnoreCase(request.getMethod())) {
-            String adminTokenHeader = request.getHeader("X-Admin-Token");
-            if (adminToken.equals(adminTokenHeader)) {
-                return true; // Admin has full access bypass
-            }
-
-            String customerEmailHeader = request.getHeader("X-Customer-Email");
-            String customerIdHeader = request.getHeader("X-Customer-Id");
-
-            if (customerEmailHeader == null || customerIdHeader == null) {
-                response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthorized. Authentication credentials missing.");
-                return false;
-            }
-            
-            // Pass values to controller for matching ownership
-            request.setAttribute("req_customer_id", customerIdHeader);
-            request.setAttribute("req_customer_email", customerEmailHeader);
         }
 
         return true;
