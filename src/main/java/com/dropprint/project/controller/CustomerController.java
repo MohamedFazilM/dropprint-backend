@@ -9,6 +9,8 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import com.dropprint.project.util.JwtUtil;
+import java.util.Map;
 import java.util.Optional;
 
 @RestController
@@ -22,16 +24,38 @@ public class CustomerController {
     @Autowired
     private IdGeneratorService idGeneratorService;
 
+    @Autowired
+    private JwtUtil jwtUtil;
+
     private String hashPassword(String password) {
         if (password == null) return "";
-        return BCrypt.hashpw(password, BCrypt.gensalt(12));
+        return BCrypt.hashpw(password, BCrypt.gensalt(10));
     }
 
     @PostMapping("/login")
-    public ResponseEntity<?> login(@RequestBody Customer loginRequest) {
+    public ResponseEntity<?> login(@RequestBody Customer loginRequest, @RequestHeader(value = "Authorization", required = false) String authHeader) {
         if (loginRequest.getEmail() == null || loginRequest.getEmail().trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Email is required");
         }
+
+        // Fast JWT-based verification bypass
+        if (authHeader != null && authHeader.startsWith("Bearer ")) {
+            try {
+                Map<String, Object> claims = jwtUtil.validateAndExtractClaims(authHeader);
+                String emailFromJwt = (String) claims.get("email");
+                if (emailFromJwt != null && emailFromJwt.equalsIgnoreCase(loginRequest.getEmail().trim())) {
+                    Optional<Customer> customerOpt = customerRepository.findByEmail(loginRequest.getEmail().trim());
+                    if (customerOpt.isPresent()) {
+                        return ResponseEntity.ok(customerOpt.get());
+                    } else {
+                        return ResponseEntity.status(HttpStatus.NOT_FOUND).body("Customer profile not found. Please sign up first.");
+                    }
+                }
+            } catch (Exception e) {
+                // Fallback to password check if JWT verification fails
+            }
+        }
+
         if (loginRequest.getPassword() == null || loginRequest.getPassword().trim().isEmpty()) {
             return ResponseEntity.badRequest().body("Password is required");
         }

@@ -11,7 +11,9 @@ public class Design {
     private String id;
 
     private String fileUrl;
+    private String fileUrlBack;
     private String printArea;
+    private String position;
     private Double positionX;
     private Double positionY;
     private Double scale;
@@ -22,8 +24,12 @@ public class Design {
     public void setId(String id) { this.id = id; }
     public String getFileUrl() { return fileUrl; }
     public void setFileUrl(String fileUrl) { this.fileUrl = fileUrl; }
+    public String getFileUrlBack() { return fileUrlBack; }
+    public void setFileUrlBack(String fileUrlBack) { this.fileUrlBack = fileUrlBack; }
     public String getPrintArea() { return printArea; }
     public void setPrintArea(String printArea) { this.printArea = printArea; }
+    public String getPosition() { return position; }
+    public void setPosition(String position) { this.position = position; }
     public Double getPositionX() { return positionX; }
     public void setPositionX(Double positionX) { this.positionX = positionX; }
     public Double getPositionY() { return positionY; }

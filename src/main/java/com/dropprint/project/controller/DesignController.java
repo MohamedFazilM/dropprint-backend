@@ -26,16 +26,38 @@ public class DesignController {
 
     @PostMapping("/upload")
     public Design uploadDesign(
-            @RequestParam("file") MultipartFile file,
-            @RequestParam("printArea") String printArea
+            @RequestParam(value = "file", required = false) MultipartFile file,
+            @RequestParam(value = "frontFile", required = false) MultipartFile frontFile,
+            @RequestParam(value = "backFile", required = false) MultipartFile backFile,
+            @RequestParam("printArea") String printArea,
+            @RequestParam(value = "position", required = false) String position
     ) {
         try {
-            String fileUrl = storageService.uploadFile(file, "designs");
+            String frontUrl = null;
+            String backUrl = null;
+
+            if (frontFile != null && !frontFile.isEmpty()) {
+                frontUrl = storageService.uploadFile(frontFile, "designs");
+            }
+            if (backFile != null && !backFile.isEmpty()) {
+                backUrl = storageService.uploadFile(backFile, "designs");
+            }
+
+            if (file != null && !file.isEmpty()) {
+                String uploadedUrl = storageService.uploadFile(file, "designs");
+                if ("Back".equalsIgnoreCase(printArea)) {
+                    backUrl = uploadedUrl;
+                } else {
+                    frontUrl = uploadedUrl;
+                }
+            }
 
             Design design = new Design();
             design.setId(idGeneratorService.generate("dsn", "design_id_seq"));
-            design.setFileUrl(fileUrl);
+            design.setFileUrl(frontUrl != null ? frontUrl : backUrl);
+            design.setFileUrlBack(backUrl);
             design.setPrintArea(printArea);
+            design.setPosition(position);
 
             return designRepository.save(design);
         } catch (IOException e) {
