@@ -19,14 +19,22 @@ public class OrderController {
     private OrderRepository orderRepository;
 
     @PostMapping
-    public Order createOrder(@RequestBody OrderRequestDTO dto) {
+    public Order createOrder(@jakarta.validation.Valid @RequestBody OrderRequestDTO dto) {
         return orderService.createOrder(dto);
     }
 
     @GetMapping("/{id}")
-    public Order getOrder(@PathVariable String id) {
-        return orderRepository.findById(id)
+    public Order getOrder(@PathVariable String id, jakarta.servlet.http.HttpServletRequest request) {
+        Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Order not found"));
+
+        String reqCustomerId = (String) request.getAttribute("req_customer_id");
+        if (reqCustomerId != null) {
+            if (order.getCustomer() == null || !order.getCustomer().getId().equals(reqCustomerId)) {
+                throw new RuntimeException("Access denied. You do not own this order.");
+            }
+        }
+        return order;
     }
 
     @GetMapping("/track")

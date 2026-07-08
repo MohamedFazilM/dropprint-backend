@@ -1,12 +1,25 @@
 package com.dropprint.project.dto;
 
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import java.util.List;
 
 public class OrderRequestDTO {
+    @NotBlank(message = "Name is required")
     private String name;
+
+    @NotBlank(message = "Email is required")
+    @Email(message = "Invalid email format")
     private String email;
+
+    @NotBlank(message = "Phone is required")
     private String phone;
+
+    @NotBlank(message = "Address is required")
     private String address;
+
+    @NotEmpty(message = "Order must contain at least one item")
     private List<OrderItemRequestDTO> items;
 
     public String getName() { return name; }

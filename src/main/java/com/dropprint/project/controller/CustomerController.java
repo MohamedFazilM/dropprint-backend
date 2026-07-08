@@ -3,13 +3,12 @@ package com.dropprint.project.controller;
 import com.dropprint.project.model.Customer;
 import com.dropprint.project.repository.CustomerRepository;
 import com.dropprint.project.service.IdGeneratorService;
+import org.mindrot.jbcrypt.BCrypt;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.MessageDigest;
-import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 
 @RestController
@@ -25,21 +24,7 @@ public class CustomerController {
 
     private String hashPassword(String password) {
         if (password == null) return "";
-        try {
-            MessageDigest digest = MessageDigest.getInstance("SHA-256");
-            byte[] encodedhash = digest.digest(password.getBytes(StandardCharsets.UTF_8));
-            StringBuilder hexString = new StringBuilder(2 * encodedhash.length);
-            for (byte b : encodedhash) {
-                String hex = Integer.toHexString(0xff & b);
-                if (hex.length() == 1) {
-                    hexString.append('0');
-                }
-                hexString.append(hex);
-            }
-            return hexString.toString();
-        } catch (Exception e) {
-            throw new RuntimeException("Error hashing password", e);
-        }
+        return BCrypt.hashpw(password, BCrypt.gensalt(12));
     }
 
     @PostMapping("/login")
@@ -54,8 +39,8 @@ public class CustomerController {
         Optional<Customer> customerOpt = customerRepository.findByEmail(loginRequest.getEmail().trim());
         if (customerOpt.isPresent()) {
             Customer customer = customerOpt.get();
-            String hashedInput = hashPassword(loginRequest.getPassword().trim());
-            if (hashedInput.equals(customer.getPassword())) {
+            String plainPassword = loginRequest.getPassword().trim();
+            if (BCrypt.checkpw(plainPassword, customer.getPassword())) {
                 return ResponseEntity.ok(customer);
             } else {
                 return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body("Invalid credentials. Please verify your password.");

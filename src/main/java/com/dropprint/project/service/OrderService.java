@@ -6,6 +6,7 @@ import com.dropprint.project.model.*;
 import com.dropprint.project.repository.*;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -31,6 +32,7 @@ public class OrderService {
     @Autowired
     private IdGeneratorService idGeneratorService;
 
+    @Transactional
     public Order createOrder(OrderRequestDTO dto) {
 
         Customer customer = customerRepository.findByEmail(dto.getEmail())

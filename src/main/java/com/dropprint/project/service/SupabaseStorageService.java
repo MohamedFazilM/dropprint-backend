@@ -21,7 +21,9 @@ public class SupabaseStorageService {
     private final RestTemplate restTemplate = new RestTemplate();
 
     public String uploadFile(MultipartFile file, String bucket) throws IOException {
-        String fileName = UUID.randomUUID() + "-" + file.getOriginalFilename();
+        com.dropprint.project.util.FileValidationUtil.validate(file);
+        String sanitizedName = com.dropprint.project.util.FileValidationUtil.sanitizeFilename(file.getOriginalFilename());
+        String fileName = UUID.randomUUID() + "-" + sanitizedName;
         String uploadUrl = supabaseUrl + "/storage/v1/object/" + bucket + "/" + fileName;
 
         HttpHeaders headers = new HttpHeaders();
