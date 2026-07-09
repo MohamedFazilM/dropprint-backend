@@ -1,33 +1,49 @@
-HELP.md
+# Maven build target
 target/
-.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
 
-### STS ###
+# Gradle build folder
+build/
+!**/src/main/**/build/
+!**/src/test/**/build/
+
+# Maven Wrapper jar
+.mvn/wrapper/maven-wrapper.jar
+
+# Environment files and database secrets
+.env
+.env.local
+
+# Logs
+logs/
+*.log
+
+# STS / Eclipse project files
 .apt_generated
 .classpath
 .factorypath
 .project
-.settings
+.settings/
 .springBeans
 .sts4-cache
 
-### IntelliJ IDEA ###
-.idea
+# IntelliJ IDEA project files
+.idea/
 *.iws
 *.iml
 *.ipr
 
-### NetBeans ###
+# NetBeans
 /nbproject/private/
 /nbbuild/
 /dist/
 /nbdist/
 /.nb-gradle/
-build/
-!**/src/main/**/build/
-!**/src/test/**/build/
 
-### VS Code ###
+# VS Code config
 .vscode/
+
+# System-specific files
+.DS_Store
+Thumbs.db
