@@ -47,6 +47,7 @@ public class OrderController {
         if (reqCustomerEmail != null) {
             if (order.getCustomer() == null || !order.getCustomer().getEmail().equalsIgnoreCase(reqCustomerEmail)) {
                 throw new RuntimeException("Access denied. You do not own this order.");
+                
             }
         }
         return order;
