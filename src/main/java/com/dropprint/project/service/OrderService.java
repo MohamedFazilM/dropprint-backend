@@ -35,7 +35,7 @@ public class OrderService {
     @Transactional
     public Order createOrder(OrderRequestDTO dto) {
 
-        Customer customer = customerRepository.findByEmail(dto.getEmail())
+        Customer customer = customerRepository.findByEmailIgnoreCase(dto.getEmail().trim())
                 .orElseGet(() -> {
                     Customer c = new Customer();
                     c.setId(idGeneratorService.generate("cust", "customer_id_seq"));

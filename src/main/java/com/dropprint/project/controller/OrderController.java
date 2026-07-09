@@ -30,7 +30,7 @@ public class OrderController {
         if (reqCustomerEmail == null) {
             throw new RuntimeException("Unauthorized. Session invalid or missing.");
         }
-        return orderRepository.findByCustomerEmailOrderByCreatedAtDesc(reqCustomerEmail);
+        return orderRepository.findByCustomerEmailIgnoreCaseOrderByCreatedAtDesc(reqCustomerEmail);
     }
 
     @GetMapping("/{id}")

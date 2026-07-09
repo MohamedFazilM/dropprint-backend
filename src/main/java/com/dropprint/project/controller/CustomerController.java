@@ -44,7 +44,7 @@ public class CustomerController {
                 Map<String, Object> claims = jwtUtil.validateAndExtractClaims(authHeader);
                 String emailFromJwt = (String) claims.get("email");
                 if (emailFromJwt != null && emailFromJwt.equalsIgnoreCase(loginRequest.getEmail().trim())) {
-                    Optional<Customer> customerOpt = customerRepository.findByEmail(loginRequest.getEmail().trim());
+                    Optional<Customer> customerOpt = customerRepository.findByEmailIgnoreCase(loginRequest.getEmail().trim());
                     if (customerOpt.isPresent()) {
                         return ResponseEntity.ok(customerOpt.get());
                     } else {
@@ -60,7 +60,7 @@ public class CustomerController {
             return ResponseEntity.badRequest().body("Password is required");
         }
 
-        Optional<Customer> customerOpt = customerRepository.findByEmail(loginRequest.getEmail().trim());
+        Optional<Customer> customerOpt = customerRepository.findByEmailIgnoreCase(loginRequest.getEmail().trim());
         if (customerOpt.isPresent()) {
             Customer customer = customerOpt.get();
             String plainPassword = loginRequest.getPassword().trim();
@@ -86,7 +86,7 @@ public class CustomerController {
             return ResponseEntity.badRequest().body("Password is required");
         }
 
-        Optional<Customer> existing = customerRepository.findByEmail(signupRequest.getEmail().trim());
+        Optional<Customer> existing = customerRepository.findByEmailIgnoreCase(signupRequest.getEmail().trim());
         if (existing.isPresent()) {
             return ResponseEntity.status(HttpStatus.CONFLICT).body("Email is already registered. Please login instead.");
         }
