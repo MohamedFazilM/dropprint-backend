@@ -34,9 +34,23 @@ public class SecurityInterceptor implements HandlerInterceptor {
 
         String path = request.getRequestURI();
 
+        // Exclude admin login route from interceptor check
+        if (path.equals("/api/admin/login") || path.endsWith("/admin/login") || path.endsWith("/admin/login/")) {
+            return true;
+        }
+
         // Secure Admin APIs and retrieve order ownership details
         if (path.startsWith("/api/admin") || (path.startsWith("/api/orders/") && "GET".equalsIgnoreCase(request.getMethod()))) {
             String authHeader = request.getHeader("Authorization");
+
+            // In Dev Mode, skip validation ONLY if this is NOT an admin route AND no Authorization header is provided.
+            if (jwtUtil.isDevMode() && !path.startsWith("/api/admin") && (authHeader == null || !authHeader.startsWith("Bearer "))) {
+                System.out.println("[JWT] DEV MODE BYPASS: Skipping non-admin authorization checks.");
+                request.setAttribute("is_admin_bypass", true);
+                request.setAttribute("req_customer_email", "admin@dropprint.com");
+                return true;
+            }
+
             if (authHeader == null || !authHeader.startsWith("Bearer ")) {
                 response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Unauthenticated. Authorization token is missing.");
                 return false;
@@ -58,6 +72,8 @@ public class SecurityInterceptor implements HandlerInterceptor {
                 // Check admin authorization
                 boolean isAdmin = "admin".equalsIgnoreCase(role) || 
                         (email != null && Arrays.asList(adminEmails.split(",")).contains(email.toLowerCase().trim()));
+
+                System.out.println("[SecurityInterceptor] AUTHORIZATION CHECK - Path: " + path + ", Email: " + email + ", Role: " + role + ", Configured Admins: " + adminEmails + " -> Resolved isAdmin: " + isAdmin);
 
                 if (path.startsWith("/api/admin")) {
                     if (!isAdmin) {

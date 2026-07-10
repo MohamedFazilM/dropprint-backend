@@ -30,7 +30,11 @@ public class DesignController {
             @RequestParam(value = "frontFile", required = false) MultipartFile frontFile,
             @RequestParam(value = "backFile", required = false) MultipartFile backFile,
             @RequestParam("printArea") String printArea,
-            @RequestParam(value = "position", required = false) String position
+            @RequestParam(value = "position", required = false) String position,
+            @RequestParam(value = "positionX", required = false) Double positionX,
+            @RequestParam(value = "positionY", required = false) Double positionY,
+            @RequestParam(value = "scale", required = false) Double scale,
+            @RequestParam(value = "rotation", required = false) Double rotation
     ) {
         try {
             String frontUrl = null;
@@ -58,6 +62,10 @@ public class DesignController {
             design.setFileUrlBack(backUrl);
             design.setPrintArea(printArea);
             design.setPosition(position);
+            design.setPositionX(positionX);
+            design.setPositionY(positionY);
+            design.setScale(scale);
+            design.setRotation(rotation);
 
             return designRepository.save(design);
         } catch (IOException e) {

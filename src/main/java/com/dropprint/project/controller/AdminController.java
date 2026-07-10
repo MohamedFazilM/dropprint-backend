@@ -10,6 +10,7 @@ import com.dropprint.project.service.IdGeneratorService;
 import com.dropprint.project.service.LedgerService;
 import com.dropprint.project.service.SupabaseStorageService;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
@@ -22,6 +23,23 @@ import java.util.Map;
 @RequestMapping("/api/admin")
 @CrossOrigin(origins = "*")
 public class AdminController {
+
+    @Value("${admin.password:admin123}")
+    private String adminPassword;
+
+    @PostMapping("/login")
+    public Map<String, Object> adminLogin(@RequestBody(required = false) Map<String, String> body) {
+        System.out.println("[AdminController] login endpoint hit! adminPassword value: " + adminPassword + ", body received: " + body);
+        if (body == null || !body.containsKey("password")) {
+            return Map.of("success", false, "message", "Access key is missing.");
+        }
+        String inputPassword = body.get("password");
+        if (adminPassword != null && adminPassword.equals(inputPassword)) {
+            return Map.of("success", true, "token", "secured_admin_session_token");
+        } else {
+            return Map.of("success", false, "message", "Incorrect admin password.");
+        }
+    }
 
     @Autowired
     private OrderRepository orderRepository;
@@ -101,6 +119,23 @@ public class AdminController {
             return Map.of("url", fileUrl);
         } catch (IOException e) {
             throw new RuntimeException("Upload failed: " + e.getMessage());
+        }
+    }
+
+    @DeleteMapping("/products/{id}")
+    public Map<String, Object> deleteProduct(@PathVariable String id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Product not found"));
+        try {
+            productRepository.delete(product);
+            ledgerService.log("product", id, "product_deleted", null, "Product deleted: " + product.getName());
+            return Map.of("success", true, "message", "Product deleted successfully");
+        } catch (Exception e) {
+            // Soft delete fallback if referenced in active orders
+            product.setStatus("inactive");
+            productRepository.save(product);
+            ledgerService.log("product", id, "product_soft_deleted", null, "Product soft-deleted due to existing orders dependency");
+            return Map.of("success", true, "message", "Product deactivated (soft-deleted) because of active order history dependency.");
         }
     }
     

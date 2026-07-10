@@ -18,6 +18,10 @@ public class JwtUtil {
     @Value("${supabase.jwt-secret:}")
     private String jwtSecret;
 
+    public boolean isDevMode() {
+        return jwtSecret == null || jwtSecret.trim().isEmpty();
+    }
+
     public Map<String, Object> validateAndExtractClaims(String authorizationHeader) {
         if (authorizationHeader == null || !authorizationHeader.startsWith("Bearer ")) {
             throw new IllegalArgumentException("Missing or invalid Authorization header.");
