@@ -18,6 +18,7 @@ public class Design {
     private Double positionY;
     private Double scale;
     private Double rotation;
+    private String description;
     private LocalDateTime createdAt = LocalDateTime.now();
 
     public String getId() { return id; }
@@ -38,6 +39,8 @@ public class Design {
     public void setScale(Double scale) { this.scale = scale; }
     public Double getRotation() { return rotation; }
     public void setRotation(Double rotation) { this.rotation = rotation; }
+    public String getDescription() { return description; }
+    public void setDescription(String description) { this.description = description; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
 }

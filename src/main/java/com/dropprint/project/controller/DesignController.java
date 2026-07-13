@@ -34,9 +34,11 @@ public class DesignController {
             @RequestParam(value = "positionX", required = false) Double positionX,
             @RequestParam(value = "positionY", required = false) Double positionY,
             @RequestParam(value = "scale", required = false) Double scale,
-            @RequestParam(value = "rotation", required = false) Double rotation
+            @RequestParam(value = "rotation", required = false) Double rotation,
+            @RequestParam(value = "description", required = false) String description
     ) {
         try {
+            System.out.println("[DesignController] uploadDesign called. printArea: " + printArea + ", position: " + position + ", description: " + description);
             String frontUrl = null;
             String backUrl = null;
 
@@ -58,14 +60,20 @@ public class DesignController {
 
             Design design = new Design();
             design.setId(idGeneratorService.generate("dsn", "design_id_seq"));
-            design.setFileUrl(frontUrl != null ? frontUrl : backUrl);
+            design.setFileUrl(frontUrl != null ? frontUrl : "");
             design.setFileUrlBack(backUrl);
             design.setPrintArea(printArea);
-            design.setPosition(position);
+            
+            String safePosition = position;
+            if (safePosition != null && safePosition.length() > 100) {
+                safePosition = safePosition.substring(0, 100);
+            }
+            design.setPosition(safePosition);
             design.setPositionX(positionX);
             design.setPositionY(positionY);
             design.setScale(scale);
             design.setRotation(rotation);
+            design.setDescription(description);
 
             return designRepository.save(design);
         } catch (IOException e) {

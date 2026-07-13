@@ -8,11 +8,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import jakarta.annotation.PostConstruct;
+import javax.sql.DataSource;
+import java.sql.Connection;
+import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 
 @Service
 public class OrderService {
+
+    @Autowired
+    private DataSource dataSource;
 
     @Autowired
     private CustomerRepository customerRepository;
@@ -32,6 +39,21 @@ public class OrderService {
     @Autowired
     private IdGeneratorService idGeneratorService;
 
+    @PostConstruct
+    public void migrateDatabase() {
+        try (Connection conn = dataSource.getConnection();
+             Statement stmt = conn.createStatement()) {
+            System.out.println("[Migration] Checking / Adding shipping details columns to orders table...");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_name VARCHAR(255)");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_email VARCHAR(255)");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone VARCHAR(50)");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address TEXT");
+            System.out.println("[Migration] Orders table schema validation passed successfully.");
+        } catch (Exception e) {
+            System.err.println("[Migration] Database schema migration error: " + e.getMessage());
+        }
+    }
+
     @Transactional
     public Order createOrder(OrderRequestDTO dto) {
 
@@ -39,18 +61,36 @@ public class OrderService {
                 .orElseGet(() -> {
                     Customer c = new Customer();
                     c.setId(idGeneratorService.generate("cust", "customer_id_seq"));
-                    c.setName(dto.getName());
-                    c.setEmail(dto.getEmail());
-                    c.setPhone(dto.getPhone());
-                    c.setAddress(dto.getAddress());
+                    c.setName(dto.getName().trim());
+                    c.setEmail(dto.getEmail().trim());
+                    c.setPhone(dto.getPhone() != null ? dto.getPhone().trim() : "");
+                    c.setAddress(dto.getAddress() != null ? dto.getAddress().trim() : "");
                     Customer saved = customerRepository.save(c);
                     ledgerService.log("customer", saved.getId(), "customer_created", null, "New customer registered: " + saved.getName());
                     return saved;
                 });
 
+        // Update default phone/address on Customer profile if they were empty
+        boolean customerUpdated = false;
+        if ((customer.getPhone() == null || customer.getPhone().trim().isEmpty()) && dto.getPhone() != null) {
+            customer.setPhone(dto.getPhone().trim());
+            customerUpdated = true;
+        }
+        if ((customer.getAddress() == null || customer.getAddress().trim().isEmpty()) && dto.getAddress() != null) {
+            customer.setAddress(dto.getAddress().trim());
+            customerUpdated = true;
+        }
+        if (customerUpdated) {
+            customerRepository.save(customer);
+        }
+
         Order order = new Order();
         order.setId(idGeneratorService.generate("odr", "order_id_seq"));
         order.setCustomer(customer);
+        order.setShippingName(dto.getName() != null ? dto.getName().trim() : customer.getName());
+        order.setShippingEmail(dto.getEmail() != null ? dto.getEmail().trim() : customer.getEmail());
+        order.setShippingPhone(dto.getPhone() != null ? dto.getPhone().trim() : customer.getPhone());
+        order.setShippingAddress(dto.getAddress() != null ? dto.getAddress().trim() : customer.getAddress());
         order.setStatus("placed");
         order.setPaymentStatus("pending");
 
@@ -118,5 +158,34 @@ public class OrderService {
                 "Order placed by " + customer.getName() + " via COD");
 
         return savedOrder;
+    }
+
+    public static void main(String[] args) {
+        String dbUrl = System.getenv("SPRING_DATASOURCE_URL");
+        if (dbUrl == null) {
+            dbUrl = "jdbc:postgresql://aws-1-ap-southeast-2.pooler.supabase.com:5432/postgres";
+        }
+        String user = System.getenv("SPRING_DATASOURCE_USERNAME");
+        if (user == null) {
+            user = "postgres.zgdreppfqcpsysspcsra";
+        }
+        String pass = System.getenv("SPRING_DATASOURCE_PASSWORD");
+        if (pass == null) {
+            pass = "supabase@123";
+        }
+        
+        System.out.println("[Manual Migration] Connecting to database: " + dbUrl);
+        try (java.sql.Connection conn = java.sql.DriverManager.getConnection(dbUrl, user, pass);
+             java.sql.Statement stmt = conn.createStatement()) {
+            System.out.println("[Manual Migration] Running ALTER TABLE queries...");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_name VARCHAR(255)");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_email VARCHAR(255)");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_phone VARCHAR(50)");
+            stmt.execute("ALTER TABLE orders ADD COLUMN IF NOT EXISTS shipping_address TEXT");
+            System.out.println("[Manual Migration] Database columns added successfully!");
+        } catch (Exception e) {
+            System.err.println("[Manual Migration] Database connection/execution error:");
+            e.printStackTrace();
+        }
     }
 }
